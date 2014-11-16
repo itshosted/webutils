@@ -63,7 +63,7 @@ func ReadOutput(r *http.Response, out interface{}) error {
 func Error(w http.ResponseWriter, e error, msg string) {
 	report.Err(e)
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Status", "500")
+	w.WriteHeader(500)
 	if e := FlushJson(w, Reply(false, msg)); e != nil {
 		panic(e)
 	}
