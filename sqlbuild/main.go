@@ -3,7 +3,10 @@ package sqlbuild
  * Utility methods for creating SQL query's
  */
 import (
+	"strings"
 	"strconv"
+	"fmt"
+	"time"
 )
 
 // Lazy create key and values for SQL Insert
@@ -57,4 +60,23 @@ func Paginate(page int64, size int64) (string) {
 		return strconv.FormatInt(size, 10)
 	}
 	return strconv.FormatInt(page*size, 10) + "," + strconv.FormatInt(size, 10)
+}
+
+func SaveQuery(table string, keys []string, id int64) string {
+	pos := strings.LastIndex(table, "_")
+	prefix := table
+	if pos != -1 {
+		prefix = table[pos+1:]
+	}
+
+	if id == 0 {
+		a := prefix + "_date_added"
+		k, v := Keys(keys)
+		return fmt.Sprintf("INSERT INTO %s (%s, %s) VALUES(%s, %d)", table, k, a, v, time.Now().Unix())
+	}
+
+	a := prefix + "_date_updated"
+	kv := Keys2(keys)
+	priKey := table + "_id"
+	return fmt.Sprintf("UPDATE %s SET %s, %s=%d WHERE %s = %d", table, kv, a, time.Now().Unix(), priKey, id)
 }
