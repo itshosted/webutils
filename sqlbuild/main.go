@@ -56,5 +56,5 @@ func Paginate(page int64, size int64) (string) {
 	if page == 0 {
 		return strconv.FormatInt(size, 10)
 	}
-	return strconv.FormatInt(page*size+1, 10) + "," + strconv.FormatInt(size, 10)
+	return strconv.FormatInt(page*size, 10) + "," + strconv.FormatInt(size, 10)
 }
