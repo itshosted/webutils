@@ -35,27 +35,27 @@ type Session struct {
 }
 
 func (s *Session) Encrypt(iv string) (string, error) {
-	return encrypt.EncryptBase64(iv, s)
+	return encrypt.EncryptBase64("aes", iv, s)
 }
 
 func (s *Session) Decrypt(in string, iv string) error {
-	return encrypt.DecryptBase64(iv, in, s)
+	return encrypt.DecryptBase64("aes", iv, in, s)
 }
 
-func ExpireSession(w http.ResponseWriter, cookie *http.Cookie) {
+func Expire(w http.ResponseWriter, cookie *http.Cookie) {
 	cookie.Value = ""
 	cookie.Expires = time.Date(1970, 1, 1, 1, 0, 0, 0, time.UTC)
 	cookie.Path = "/"
 	http.SetCookie(w, cookie)
 }
 
-func ReadSession(w http.ResponseWriter, r *http.Request, proxy bool) (*Session, error) {
+func Read(w http.ResponseWriter, r *http.Request, proxy bool, IV string) (*Session, error) {
 	sess := new(Session)
 	c, e := r.Cookie("sess")
 	if e != nil {
 		return nil, e
 	}
-	e = sess.Decrypt(c.Value)
+	e = sess.Decrypt(c.Value, IV)
 	if e != nil {
 		return nil, e
 	}
@@ -64,20 +64,20 @@ func ReadSession(w http.ResponseWriter, r *http.Request, proxy bool) (*Session, 
 	if proxy {
 		if sess.Ip != r.Header.Get("X-Real-IP") {
 			report.Msg("[IP CHANGED] Possible stolen cookie for loginId=" + strconv.FormatInt(sess.Id, 10))
-			ExpireSession(w, c)
+			Expire(w, c)
 			return nil, errors.New("IP changed")
 		}
 	} else {
 		if sess.Ip != r.RemoteAddr {
 			report.Msg("[IP CHANGED] Possible stolen cookie for loginId=" + strconv.FormatInt(sess.Id, 10))
-			ExpireSession(w, c)
+			Expire(w, c)
 			return nil, errors.New("IP changed")
 		}
 	}
 
 	if sess.Ua != r.Header.Get("User-Agent") {
 		report.Msg("[UA CHANGED] Possible stolen cookie for loginId=" + strconv.FormatInt(sess.Id, 10))
-		ExpireSession(w, c)
+		Expire(w, c)
 		return nil, errors.New("UserAgent changed")
 	}
 	return sess, nil
