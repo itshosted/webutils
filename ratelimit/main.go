@@ -8,6 +8,8 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"net/http"
 	"webutils/report"
+	"webutils/middleware"
+	"webutils/httpd"
 	"strconv"
 	"strings"
 )
@@ -58,8 +60,8 @@ func check(Ip string, Prefix string, Expire int, Max int) (bool, error) {
 	return false, nil
 }
 
-func UseRatelimit(h *http.ServeMux, limit Limit) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Use(limit Limit) middleware.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) bool {
 		ip := r.RemoteAddr
 		if (limit.Proxy) {
 			ip = r.Header.Get("X-Real-IP")
@@ -72,8 +74,11 @@ func UseRatelimit(h *http.ServeMux, limit Limit) http.HandlerFunc {
 		}
 		if max {
 			w.WriteHeader(429)
-		} else {
-			h.ServeHTTP(w, r)
+			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
+				httpd.Error(w, e, "Flush failed")
+			}
+			return false
 		}
+		return true
 	}
 }
