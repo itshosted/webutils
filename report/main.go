@@ -49,8 +49,9 @@ func Msg(s string) {
 }
 
 func Debug(s string) {
-	// TODO: check is_debug?
-	msg.Println(s)
+	if IsVerbose {
+		msg.Println(s)
+	}
 }
 
 // Same as Msg except his reports abuse
