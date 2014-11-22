@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"webutils/report"
+	"strconv"
+	"errors"
+	"io"
 )
 
 type DefaultResponse struct {
@@ -61,10 +64,27 @@ func ReadOutput(r *http.Response, out interface{}) error {
 
 // Write msg as error and report e to log
 func Error(w http.ResponseWriter, e error, msg string) {
-	report.Err(e)
+	if e != nil {
+		report.Err(e)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 	if e := FlushJson(w, Reply(false, msg)); e != nil {
 		panic(e)
 	}
+}
+
+// Proxy stream through
+func Pipe(url string, w http.ResponseWriter) error {
+	report.Debug("Pipe: " + url)
+	res, e := http.Get(url)
+	if e != nil {
+		return e
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 && res.StatusCode != 400 {
+		return errors.New("Invalid HTTP-status code: " + strconv.Itoa(res.StatusCode))
+	}
+	_, e = io.Copy(w, res.Body)
+	return e
 }
