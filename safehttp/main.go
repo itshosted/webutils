@@ -1,4 +1,5 @@
 package safehttp
+
 /**
  * Require admin privilege unless excluded.
  *
@@ -6,11 +7,11 @@ package safehttp
  *  permissions to become a problem.
  */
 import (
-	"webutils/session"
-	"webutils/middleware"
 	"net/http"
-	"webutils/report"
 	"webutils/httpd"
+	"webutils/middleware"
+	"webutils/report"
+	"webutils/session"
 )
 
 var (
@@ -44,7 +45,7 @@ func check(s *session.Session) (bool, bool) {
 
 func Use(proxy bool, IV string) middleware.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) bool {
-		rule, hasRule := rules[ r.URL.Path ]
+		rule, hasRule := rules[r.URL.Path]
 		if hasRule && rule.Session == false {
 			return true
 		}

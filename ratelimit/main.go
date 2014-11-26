@@ -1,4 +1,5 @@
 package ratelimit
+
 /**
  * HTTP Ratelimiter
  * Use Redis to limit amount of
@@ -7,18 +8,18 @@ package ratelimit
 import (
 	"github.com/garyburd/redigo/redis"
 	"net/http"
-	"webutils/report"
-	"webutils/middleware"
-	"webutils/httpd"
 	"strconv"
 	"strings"
+	"webutils/httpd"
+	"webutils/middleware"
+	"webutils/report"
 )
 
 type Limit struct {
-	RatelimitTime int /* secs */
-	RatelimitMax  int /* max reqs */
-	Proxy bool /* use proxy IP */
-	Prefix string /* redis key prefix */
+	RatelimitTime int    /* secs */
+	RatelimitMax  int    /* max reqs */
+	Proxy         bool   /* use proxy IP */
+	Prefix        string /* redis key prefix */
 }
 
 var (
@@ -37,7 +38,7 @@ func check(Ip string, Prefix string, Expire int, Max int) (bool, error) {
 	if strings.Index(Ip, ":") != -1 {
 		Ip = Ip[:strings.Index(Ip, ":")]
 	}
-	if (_pool == nil) {
+	if _pool == nil {
 		panic("DevErr: Forgot to call SetRedis(pool)")
 	}
 	conn := _pool.Get()
@@ -63,7 +64,7 @@ func check(Ip string, Prefix string, Expire int, Max int) (bool, error) {
 func Use(limit Limit) middleware.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		ip := r.RemoteAddr
-		if (limit.Proxy) {
+		if limit.Proxy {
 			ip = r.Header.Get("X-Real-IP")
 		}
 		max, e := check(ip, limit.Prefix, limit.RatelimitTime, limit.RatelimitMax)

@@ -10,7 +10,7 @@ import (
 func EncryptBase64(enc string, iv string, in interface{}) (string, error) {
 	var (
 		raw []byte
-		e error
+		e   error
 	)
 	if len(iv) != 32 {
 		return "", errors.New("IV must be random 32-chars")
@@ -34,9 +34,9 @@ func EncryptBase64(enc string, iv string, in interface{}) (string, error) {
 
 func DecryptBase64(enc string, iv string, in string, out interface{}) error {
 	var (
-		e error
+		e   error
 		str string
-		b []byte
+		b   []byte
 	)
 	if len(iv) != 32 {
 		return errors.New("IV must be random 32-chars")
@@ -55,7 +55,7 @@ func DecryptBase64(enc string, iv string, in string, out interface{}) error {
 	if enc == "aes" {
 		b, e = aesDecrypt(key, b)
 	} else {
-		return errors.New("Unsupported encoding type="+enc)
+		return errors.New("Unsupported encoding type=" + enc)
 	}
 	if e != nil {
 		return e

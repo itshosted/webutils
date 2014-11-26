@@ -1,4 +1,5 @@
 package report
+
 /**
  * Reporting lib.
  * Simple abstraction for logging.
@@ -83,11 +84,11 @@ func Init(prefix string, path string, isVerbose bool) error {
 	}
 
 	if isVerbose {
-		msg = log.New(io.MultiWriter(os.Stdout, logFd), prefix + " ", log.Ldate|log.Ltime)
-		err = log.New(io.MultiWriter(os.Stderr, errFd), prefix + " ", log.Ldate|log.Ltime)
+		msg = log.New(io.MultiWriter(os.Stdout, logFd), prefix+" ", log.Ldate|log.Ltime)
+		err = log.New(io.MultiWriter(os.Stderr, errFd), prefix+" ", log.Ldate|log.Ltime)
 	} else {
-		msg = log.New(io.Writer(logFd), prefix + " ", log.Ldate|log.Ltime)
-		err = log.New(io.Writer(errFd), prefix + " ", log.Ldate|log.Ltime)
+		msg = log.New(io.Writer(logFd), prefix+" ", log.Ldate|log.Ltime)
+		err = log.New(io.Writer(errFd), prefix+" ", log.Ldate|log.Ltime)
 	}
 	return nil
 }

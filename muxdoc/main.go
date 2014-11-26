@@ -1,19 +1,20 @@
 package muxdoc
+
 /**
  * Simple MUX-wrapper to easily create
  * documentation for the API.
  */
 import (
-	"net/http"
 	"bytes"
+	"net/http"
 )
 
 type MuxDoc struct {
 	Title string
-	Desc string
-	Meta string
+	Desc  string
+	Meta  string
 
-	Mux *http.ServeMux
+	Mux  *http.ServeMux
 	urls map[string]string
 }
 

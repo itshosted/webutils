@@ -1,16 +1,17 @@
 package httpd
+
 /**
  * Lazy utility methods for HTTP-server.
  */
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"webutils/report"
 	"strconv"
-	"errors"
-	"io"
+	"webutils/report"
 )
 
 type DefaultResponse struct {

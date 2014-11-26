@@ -1,11 +1,12 @@
 package sqlbuild
+
 /**
  * Utility methods for creating SQL query's
  */
 import (
-	"strings"
-	"strconv"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,7 +23,7 @@ func Keys(keys []string) (string, string) {
 }
 
 // Lazy create key=value for SQL Update
-func Keys2(keys []string) (string) {
+func Keys2(keys []string) string {
 	var out string
 	for _, key := range keys {
 		out = out + ",`" + key + "` = ?"
@@ -55,7 +56,7 @@ func AllowNullInt(i int) *int {
 }
 
 // Create LIMIT for paginating with MySQL
-func Paginate(page int64, size int64) (string) {
+func Paginate(page int64, size int64) string {
 	if page == 0 {
 		return strconv.FormatInt(size, 10)
 	}

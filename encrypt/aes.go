@@ -4,9 +4,9 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64" // TODO: Should not be here?
 	"errors"
 	"io"
-	"encoding/base64" // TODO: Should not be here?
 )
 
 func aesEncrypt(key, text []byte) ([]byte, error) {
