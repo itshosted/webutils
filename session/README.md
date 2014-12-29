@@ -8,6 +8,10 @@ Why would you want this?
 Stateless server code. No need to share 'sessions' between
 servers on the backend.
 
+Cookies are protected with AES256 against local modification by
+the user and the user' IP+UA(User Agent) are compared every time
+the session is read into memory.
+
 ```
 /**
  * Cookie data structure.
