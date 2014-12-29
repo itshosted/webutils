@@ -3,6 +3,11 @@ Limit the amount of HTTP-requests per X seconds using
 Redis.
 
 ```go
+import (
+"github.com/garyburd/redigo/redis"
+"github.com/xsnews/webutils/ratelimit"
+"github.com/xsnews/webutils/middleware"
+)
 var (
 Redis  *redis.Pool
 )
