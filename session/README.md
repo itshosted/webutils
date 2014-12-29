@@ -12,7 +12,7 @@ Cookies are protected with AES256 against local modification by
 the user and the user' IP+UA(User Agent) are compared every time
 the session is read into memory.
 
-```
+```go
 /**
  * Cookie data structure.
  */
@@ -27,7 +27,7 @@ type Session struct {
 ```
 
 Login code
-```
+```go
 import (
   "strings"
   "time"

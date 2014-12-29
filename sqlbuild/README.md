@@ -15,7 +15,7 @@ To simplify code the following assumptions are made:
 This lib also provides Paginate() for simple pagination of results.
 
 Abstracting INSERT/UPDATE
-```
+```go
 import (
   "github.com/xsnews/webutils/sqlbuild"
 )
@@ -39,7 +39,7 @@ import (
 ```
 
 Pagination
-```
+```go
 limit := sqlbuild.Paginate(0, 5000)
 // 5000
 limit := sqlbuild.Paginate(1, 5000)

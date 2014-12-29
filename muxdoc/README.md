@@ -1,6 +1,6 @@
 Make API self documenting by using MuxDoc instead of Mux.
 
-```
+```go
 import (
 "github.com/xsnews/webutils/middleware"
 "github.com/xsnews/webutils/muxdoc"

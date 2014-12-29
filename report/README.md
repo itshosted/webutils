@@ -10,7 +10,7 @@ besides the log-file for easily debugging.
 
 Every call to Err() also supplies a backtrace.
 
-```
+```go
 func Init(prefix string, path string, isVerbose bool) error
 func Close()
 

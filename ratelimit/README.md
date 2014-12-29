@@ -2,7 +2,7 @@ Ratelimit
 Limit the amount of HTTP-requests per X seconds using
 Redis.
 
-```
+```go
 var (
 Redis  *redis.Pool
 )

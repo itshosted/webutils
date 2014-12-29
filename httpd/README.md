@@ -1,6 +1,6 @@
 HTTP Input/Output Utility methods
 
-```
+```go
 type DefaultResponse struct {
   Status bool   `json:"status"`
   Text   string `json:"text"`
