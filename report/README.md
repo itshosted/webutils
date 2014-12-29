@@ -5,10 +5,10 @@ Write to path/(activity|error).log
 activity.log contains regular info supplied by Msg and Debug(isVerbose)
 error.log contains Err supplied info.
 
-
 If isVerbose is set to true all logging text is appended to stdout and stderr
 besides the log-file for easily debugging.
 
+Every call to Err() also supplies a backtrace.
 
 ```
 func Init(prefix string, path string, isVerbose bool) error
