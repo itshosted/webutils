@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"webutils/httpd"
-	"webutils/middleware"
-	"webutils/report"
+	"github.com/xsnews/webutils/httpd"
+	"github.com/xsnews/webutils/middleware"
+	"github.com/xsnews/webutils/report"
 )
 
 type Limit struct {

@@ -8,10 +8,10 @@ package safehttp
  */
 import (
 	"net/http"
-	"webutils/httpd"
-	"webutils/middleware"
-	"webutils/report"
-	"webutils/session"
+	"github.com/xsnews/webutils/httpd"
+	"github.com/xsnews/webutils/middleware"
+	"github.com/xsnews/webutils/report"
+	"github.com/xsnews/webutils/session"
 )
 
 var (

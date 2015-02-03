@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"webutils/report"
+	"github.com/xsnews/webutils/report"
 )
 
 type DefaultResponse struct {

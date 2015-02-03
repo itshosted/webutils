@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"webutils/encrypt"
-	"webutils/report"
+	"github.com/xsnews/webutils/encrypt"
+	"github.com/xsnews/webutils/report"
 )
 
 /**
