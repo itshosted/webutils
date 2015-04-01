@@ -1,7 +1,10 @@
 package ratelimit
-
 /**
- * HTTP Ratelimiter
+ * HTTP Ratelimiter. Limit the amount of HTTP-Requests per second.
+ * What we try to solve?
+ * - Warn about abusive servers (Log if a IP comes close to a ratelimit)
+ * - Block requests if limit exceeded (HTTP 429)
+ * - Block requests if limit is ignored DelayTreshHold times (HTTP 503)
  */
 import (
 	"github.com/golang/groupcache/lru"
@@ -14,7 +17,7 @@ import (
 	"time"
 )
 
-/* The ratelimit HTTP status code is not available in golang's HTTP library */
+// HTTP StatusCode for Ratelimit
 const (
 	StatusRateLimit     = 429
 	StatusRateLimitText = "Too Many Requests"
@@ -26,10 +29,13 @@ var (
 	CacheSize      int = 1000 /* Max connections we ratelimit based on LRU cache */
 )
 
+// Fixed size queue. If cache
+// gets bigger than CacheSize the LRU (Least Recently Used)
+// item is deleted first.
 var Cache *lru.Cache
 
-/* Returns http status code */
-func isRequestOk(addr string, rate float64, burst float64) int {
+// Check IP ratelimit and return HTTP-statuscode.
+func check(addr string, rate float64, burst float64) int {
 	ip := strings.Split(addr, ":")[0]
 
 	request, isNewRequest := Cache.Get(ip)
@@ -39,31 +45,34 @@ func isRequestOk(addr string, rate float64, burst float64) int {
 		return http.StatusOK
 	}
 
-	/* Cast to Bucket */
 	c := request.(*bucket.Bucket)
+	ok := c.Request(1.0)
 
-	/* Request a token from bucket */
-	ok, _ := c.Request(1.0)
 	if !ok {
-		/* Did we exceed our ratelimit threshold? */
 		if c.DelayCounter >= DelayThreshold {
+			// Abusive Microservice keeps flooding us.
+			// Change HTTP-statuscode to get attention!
 			return http.StatusServiceUnavailable
 		}
-
-		/* Ratelimit */
 		return StatusRateLimit
 	}
-
-	/* Everything is OK */
 	return http.StatusOK
 }
 
+// Limit the amount of requests one IP can do per second.
+//
+// fillrate = Amount of requests allowed in one second
+// capacity = Amount of 'extra'(burst) requests a-top fillrate allowed
+// delay = Duration before changing http status 429 to 503
+//
+// If the fillrate+capacity are overloaded a HTTP 429 is returned
+// If the callee keeps firing requests the 429 is changed into a 503
+// if delay is passed. 
 func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
-	/* Initialise LRU cache */
 	Cache = lru.New(CacheSize)
 
 	return func(w http.ResponseWriter, r *http.Request) bool {
-		httpCode := isRequestOk(r.RemoteAddr, fillrate, capacity)
+		httpCode := check(r.RemoteAddr, fillrate, capacity)
 		switch httpCode {
 		case StatusRateLimit:
 			/* Ratelimit request */
