@@ -1,4 +1,5 @@
 package ratelimit
+
 /**
  * HTTP Ratelimiter. Limit the amount of HTTP-Requests per second.
  * What we try to solve?
@@ -12,6 +13,7 @@ import (
 	"github.com/xsnews/webutils/middleware"
 	"github.com/xsnews/webutils/ratelimit/bucket"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"fmt"
@@ -24,9 +26,9 @@ const (
 )
 
 var (
-	DelayThreshold int = 10   /* Max hits after ratelimit exceeded before making service unavailable */
-	Delay          int = 10   /* Seconds to delay after DelayTreshold */
-	CacheSize      int = 1000 /* Max IPs we ratelimit */
+	Delay          int = 10   // Seconds to delay after DelayTreshold
+	DelayThreshold int = 10   // Max hits after ratelimit exceeded before making service unavailable
+	CacheSize      int = 1000 // Max IPs we ratelimit
 )
 
 // Fixed size queue. If cache
@@ -67,7 +69,7 @@ func check(addr string, rate float64, burst float64) int {
 //
 // If the fillrate+capacity are overloaded a HTTP 429 is returned
 // If the callee keeps firing requests the 429 is changed into a 503
-// if delay is passed. 
+// if delay is passed.
 func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 	cache = lru.New(CacheSize)
 
@@ -75,7 +77,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 		httpCode := check(r.RemoteAddr, fillrate, capacity)
 		switch httpCode {
 		case StatusRateLimit:
-			/* Ratelimit request */
+			// Ratelimit request
 			fmt.Println("CRIT: Ratelimit HTTP-request for IP=" + r.RemoteAddr + " (request dropped)")
 			w.WriteHeader(StatusRateLimit)
 			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
@@ -83,8 +85,9 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 			}
 			return false
 		case http.StatusServiceUnavailable:
-			/* Max number of ratelimits exceeded, make service unavailable for this IP */
+			// Max number of ratelimits exceeded
 			fmt.Println("CRIT: Ratelimit ignored by IP=" + r.RemoteAddr + " (request dropped)")
+			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(http.StatusServiceUnavailable)
 			if e := httpd.FlushJson(w, httpd.Reply(false, http.StatusText(http.StatusServiceUnavailable))); e != nil {
 				httpd.Error(w, e, "Flush failed")
