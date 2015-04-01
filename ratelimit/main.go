@@ -77,6 +77,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 		switch httpCode {
 		case StatusRateLimit:
 			// Ratelimit request
+			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(StatusRateLimit)
 			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
 				httpd.Error(w, e, "Flush failed")
