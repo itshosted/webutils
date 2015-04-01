@@ -21,27 +21,27 @@ func init() {
 }
 
 // return true on ratelimit reached
-func isRequestOk(Addr string, Burst float64) bool {
+func isRequestOk(Addr string, rate float64, Burst float64) bool {
 	ip := strings.Split(Addr, ":")[0]
 
 	item, newEntry := Cache.Get(ip)
 	if !newEntry {
-		item = bucket.New(1.0, Burst)
+		item = bucket.New(rate, Burst)
 		Cache.Add(ip, item)
-		return false
+		return true
 	}
 
 	/* Cast cache item */
 	c := item.(*bucket.Bucket)
-	ok, _ := c.Request(1.0)
+	ok, _ := c.Request(rate)
 	return ok
 }
 
-func Use(burst float64) middleware.HandlerFunc {
+func Use(rate float64, burst float64) middleware.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		ip := r.RemoteAddr
 
-		ok := isRequestOk(ip, burst)
+		ok := isRequestOk(ip, rate, burst)
 		if !ok {
 			w.WriteHeader(429)
 			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
