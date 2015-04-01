@@ -9,6 +9,7 @@ import (
 	"github.com/xsnews/webutils/middleware"
 	"github.com/xsnews/webutils/ratelimit/bucket"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -73,6 +74,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 			return false
 		case http.StatusServiceUnavailable:
 			/* Max number of ratelimits exceeded, make service unavailable for this IP */
+			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(http.StatusServiceUnavailable)
 			if e := httpd.FlushJson(w, httpd.Reply(false, http.StatusText(http.StatusServiceUnavailable))); e != nil {
 				httpd.Error(w, e, "Flush failed")
