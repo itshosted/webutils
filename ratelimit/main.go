@@ -13,38 +13,49 @@ import (
 	"time"
 )
 
+/* The ratelimit HTTP status code is not available in golang's HTTP library */
 const (
-	StatusRateLimit = 429
+	StatusRateLimit     = 429
+	StatusRateLimitText = "Too Many Requests"
 )
 
-var DelayThreshold = 10
+type RatelimitConfig struct {
+	Delay          time.Duration /* Delay after ratelimit exceeded */
+	DelayThreshold int           /* Max hits after ratelimit exceeded before making service unavailable */
+	CacheSize      int           /* Max connections we ratelimit based on LRU cache */
+}
 
+var Config *RatelimitConfig
 var Cache *lru.Cache
 
 func init() {
-	/* LRU cache for a max of 1000 entries */
-	Cache = lru.New(1000)
+	/* Set default (sane) ratelimit values */
+	Config = &RatelimitConfig{
+		DelayThreshold: 10,
+		CacheSize:      1000,
+		Delay:          time.Second * 3,
+	}
 }
 
 /* Returns http status code */
-func isRequestOk(addr string, rate float64, burst float64, delay time.Duration) int {
+func isRequestOk(addr string, rate float64, burst float64) int {
 	ip := strings.Split(addr, ":")[0]
 
-	item, newEntry := Cache.Get(ip)
-	if !newEntry {
-		item = bucket.New(rate, burst, delay)
-		Cache.Add(ip, item)
+	request, isNewRequest := Cache.Get(ip)
+	if !isNewRequest {
+		request = bucket.New(rate, burst, Config.Delay)
+		Cache.Add(ip, request)
 		return http.StatusOK
 	}
 
 	/* Cast to Bucket */
-	c := item.(*bucket.Bucket)
+	c := request.(*bucket.Bucket)
 
 	/* Request a token from bucket */
 	ok, _ := c.Request(1.0)
 	if !ok {
 		/* Did we exceed our ratelimit threshold? */
-		if c.DelayCounter >= DelayThreshold {
+		if c.DelayCounter >= Config.DelayThreshold {
 			return http.StatusServiceUnavailable
 		}
 
@@ -56,21 +67,24 @@ func isRequestOk(addr string, rate float64, burst float64, delay time.Duration) 
 	return http.StatusOK
 }
 
-func Use(fillrate float64, capacity float64, delay time.Duration) middleware.HandlerFunc {
+func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
+	/* Initialise LRU cache */
+	Cache = lru.New(Config.CacheSize)
+
 	return func(w http.ResponseWriter, r *http.Request) bool {
-		code := isRequestOk(r.RemoteAddr, fillrate, capacity, delay)
-		switch code {
+		httpCode := isRequestOk(r.RemoteAddr, fillrate, capacity)
+		switch httpCode {
 		case StatusRateLimit:
 			/* Ratelimit request */
 			w.WriteHeader(StatusRateLimit)
-			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
+			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
 				httpd.Error(w, e, "Flush failed")
 			}
 			return false
 		case http.StatusServiceUnavailable:
 			/* Max number of ratelimits exceeded, make service unavailable for this IP */
 			w.WriteHeader(http.StatusServiceUnavailable)
-			if e := httpd.FlushJson(w, httpd.Reply(false, "Service temporarily unavailable")); e != nil {
+			if e := httpd.FlushJson(w, httpd.Reply(false, http.StatusText(http.StatusServiceUnavailable))); e != nil {
 				httpd.Error(w, e, "Flush failed")
 			}
 			return false
