@@ -18,15 +18,15 @@ type Bucket struct {
 }
 
 // Increase request counter by amount.
-// Return false if limit is reached and show available in second arg
-func (b *Bucket) Request(amount float64) (bool, float64) {
+// Return false if limit is reached
+func (b *Bucket) Request(amount float64) bool {
 	now := time.Now()
 
 	/* Are we delaying requests? */
 	if b.DelayUntil.Unix() > now.Unix() {
 		b.DelayCounter++
 		b.DelayUntil = time.Now().Add(b.Delay)
-		return false, b.Available
+		return false
 	}
 
 	timeDiff := now.Sub(b.LastUpdate).Seconds()
@@ -35,12 +35,12 @@ func (b *Bucket) Request(amount float64) (bool, float64) {
 
 	if b.Available >= amount {
 		b.Available -= amount
-		return true, b.Available
-	} else {
-		b.DelayCounter = 1
-		b.DelayUntil = time.Now().Add(b.Delay)
-		return false, b.Available
+		return true
 	}
+
+	b.DelayCounter = 1
+	b.DelayUntil = time.Now().Add(b.Delay)
+	return false
 }
 
 // Create new bucket.
