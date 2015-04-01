@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"fmt"
 )
 
 // HTTP StatusCode for Ratelimit
@@ -23,24 +24,24 @@ const (
 )
 
 var (
-	Delay          int = 10   /* Delay after ratelimit exceeded */
 	DelayThreshold int = 10   /* Max hits after ratelimit exceeded before making service unavailable */
-	CacheSize      int = 1000 /* Max connections we ratelimit based on LRU cache */
+	Delay          int = 10   /* Seconds to delay after DelayTreshold */
+	CacheSize      int = 1000 /* Max IPs we ratelimit */
 )
 
 // Fixed size queue. If cache
 // gets bigger than CacheSize the LRU (Least Recently Used)
 // item is deleted first.
-var Cache *lru.Cache
+var cache *lru.Cache
 
 // Check IP ratelimit and return HTTP-statuscode.
 func check(addr string, rate float64, burst float64) int {
 	ip := strings.Split(addr, ":")[0]
 
-	request, isNewRequest := Cache.Get(ip)
+	request, isNewRequest := cache.Get(ip)
 	if !isNewRequest {
 		request = bucket.New(rate, burst, time.Duration(Delay)*time.Second)
-		Cache.Add(ip, request)
+		cache.Add(ip, request)
 		return http.StatusOK
 	}
 
@@ -68,13 +69,14 @@ func check(addr string, rate float64, burst float64) int {
 // If the callee keeps firing requests the 429 is changed into a 503
 // if delay is passed. 
 func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
-	Cache = lru.New(CacheSize)
+	cache = lru.New(CacheSize)
 
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		httpCode := check(r.RemoteAddr, fillrate, capacity)
 		switch httpCode {
 		case StatusRateLimit:
 			/* Ratelimit request */
+			fmt.Println("CRIT: Ratelimit HTTP-request for IP=" + r.RemoteAddr + " (request dropped)")
 			w.WriteHeader(StatusRateLimit)
 			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
 				httpd.Error(w, e, "Flush failed")
@@ -82,6 +84,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 			return false
 		case http.StatusServiceUnavailable:
 			/* Max number of ratelimits exceeded, make service unavailable for this IP */
+			fmt.Println("CRIT: Ratelimit ignored by IP=" + r.RemoteAddr + " (request dropped)")
 			w.WriteHeader(http.StatusServiceUnavailable)
 			if e := httpd.FlushJson(w, httpd.Reply(false, http.StatusText(http.StatusServiceUnavailable))); e != nil {
 				httpd.Error(w, e, "Flush failed")
