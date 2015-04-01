@@ -24,14 +24,13 @@ func init() {
 // return true on ratelimit reached
 func isRequestOk(Addr string, Burst float64) bool {
 	ip := strings.Split(Addr, ":")[0]
-	key := ip
 
-	item, newEntry := Cache.Get(key)
+	item, newEntry := Cache.Get(ip)
 	if !newEntry {
 		fmt.Println("Entry not found in cache, adding")
 
 		item = bucket.New(1.0, Burst)
-		Cache.Add(key, item)
+		Cache.Add(ip, item)
 		return false
 	}
 
