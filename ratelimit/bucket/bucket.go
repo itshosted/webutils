@@ -16,6 +16,7 @@ type Bucket struct {
 	DelayCounter int
 }
 
+/* Returns: requestOK, availableCapacity */
 func (b *Bucket) Request(amount float64) (bool, float64) {
 	/* Get current TS */
 	now := time.Now()
@@ -23,6 +24,7 @@ func (b *Bucket) Request(amount float64) (bool, float64) {
 	/* Are we delaying requests? */
 	if b.DelayUntil.Unix() > now.Unix() {
 		b.DelayCounter++
+		b.DelayUntil = time.Now().Add(b.Delay)
 		return false, b.Available
 	}
 
