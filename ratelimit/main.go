@@ -6,11 +6,11 @@ package ratelimit
 import (
 	"fmt"
 	"github.com/golang/groupcache/lru"
+	"github.com/xsnews/webutils/httpd"
+	"github.com/xsnews/webutils/middleware"
+	"github.com/xsnews/webutils/ratelimit/bucket"
 	"net/http"
 	"strings"
-	"webutils/httpd"
-	"webutils/middleware"
-	"webutils/ratelimit/bucket"
 )
 
 type Limit struct {
