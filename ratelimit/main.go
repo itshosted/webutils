@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	Delay          time.Duration = time.Second * 3 /* Delay after ratelimit exceeded */
-	DelayThreshold int           = 10              /* Max hits after ratelimit exceeded before making service unavailable */
-	CacheSize      int           = 1000            /* Max connections we ratelimit based on LRU cache */
+	Delay          int = 10   /* Delay after ratelimit exceeded */
+	DelayThreshold int = 10   /* Max hits after ratelimit exceeded before making service unavailable */
+	CacheSize      int = 1000 /* Max connections we ratelimit based on LRU cache */
 )
 
 var Cache *lru.Cache
@@ -33,7 +33,7 @@ func isRequestOk(addr string, rate float64, burst float64) int {
 
 	request, isNewRequest := Cache.Get(ip)
 	if !isNewRequest {
-		request = bucket.New(rate, burst, Delay)
+		request = bucket.New(rate, burst, time.Duration(Delay)*time.Second)
 		Cache.Add(ip, request)
 		return http.StatusOK
 	}
