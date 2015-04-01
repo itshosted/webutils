@@ -13,13 +13,8 @@ import (
 	"strings"
 )
 
-type Limit struct {
-	Burst  float64
-	Proxy  bool   /* use proxy IP */
-	Prefix string /* redis key prefix */
-}
-
 var Cache *lru.Cache
+var Burst float64
 
 func init() {
 	/* LRU cache for a max of 1000 entries */
@@ -27,12 +22,12 @@ func init() {
 }
 
 // return true on ratelimit reached
-func isRateLimitReached(Addr string, Prefix string, Burst float64) bool {
+func isRequestOk(Addr string, Burst float64) bool {
 	ip := strings.Split(Addr, ":")[0]
-	key := Prefix + "_" + ip
+	key := ip
 
-	item, ok := Cache.Get(key)
-	if !ok {
+	item, newEntry := Cache.Get(key)
+	if !newEntry {
 		fmt.Println("Entry not found in cache, adding")
 
 		item = bucket.New(1.0, Burst)
@@ -42,23 +37,16 @@ func isRateLimitReached(Addr string, Prefix string, Burst float64) bool {
 
 	/* Cast cache item */
 	c := item.(*bucket.Bucket)
-	requestOk, _ := c.Request(1.0)
-	if requestOk {
-		return false
-	} else {
-		return true
-	}
+	ok, _ := c.Request(1.0)
+	return ok
 }
 
-func Use(limit Limit) middleware.HandlerFunc {
+func Use(burst float64) middleware.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		ip := r.RemoteAddr
-		if limit.Proxy {
-			ip = r.Header.Get("X-Real-IP")
-		}
 
-		doLimit := isRateLimitReached(ip, limit.Prefix, limit.Burst)
-		if doLimit {
+		ok := isRequestOk(ip, burst)
+		if !ok {
 			w.WriteHeader(429)
 			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
 				httpd.Error(w, e, "Flush failed")
