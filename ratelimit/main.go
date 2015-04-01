@@ -10,6 +10,7 @@ import (
 	"github.com/xsnews/webutils/ratelimit/bucket"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var Cache *lru.Cache
@@ -21,12 +22,12 @@ func init() {
 }
 
 // return true on ratelimit reached
-func isRequestOk(Addr string, rate float64, Burst float64) bool {
-	ip := strings.Split(Addr, ":")[0]
+func isRequestOk(addr string, rate float64, burst float64, delay time.Duration) bool {
+	ip := strings.Split(addr, ":")[0]
 
 	item, newEntry := Cache.Get(ip)
 	if !newEntry {
-		item = bucket.New(rate, Burst)
+		item = bucket.New(rate, burst, delay)
 		Cache.Add(ip, item)
 		return true
 	}
@@ -37,11 +38,11 @@ func isRequestOk(Addr string, rate float64, Burst float64) bool {
 	return ok
 }
 
-func Use(rate float64, burst float64) middleware.HandlerFunc {
+func Use(rate float64, burst float64, delay time.Duration) middleware.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		ip := r.RemoteAddr
 
-		ok := isRequestOk(ip, rate, burst)
+		ok := isRequestOk(ip, rate, burst, delay)
 		if !ok {
 			w.WriteHeader(429)
 			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
