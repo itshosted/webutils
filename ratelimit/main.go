@@ -79,13 +79,14 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 		case StatusRateLimit:
 			// Ratelimit request
 			fmt.Println("CRIT: Ratelimit HTTP-request for IP=" + r.RemoteAddr + " (request dropped)")
+			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(StatusRateLimit)
 			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
 				httpd.Error(w, e, "Flush failed")
 			}
 			return false
 		case http.StatusServiceUnavailable:
-			// Max number of ratelimits exceeded
+			// Abusive client, responding less friendly
 			fmt.Println("CRIT: Ratelimit ignored by IP=" + r.RemoteAddr + " (request dropped)")
 			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(http.StatusServiceUnavailable)
