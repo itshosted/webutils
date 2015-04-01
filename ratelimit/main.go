@@ -4,7 +4,6 @@ package ratelimit
  * HTTP Ratelimiter
  */
 import (
-	"fmt"
 	"github.com/golang/groupcache/lru"
 	"github.com/xsnews/webutils/httpd"
 	"github.com/xsnews/webutils/middleware"
@@ -27,8 +26,6 @@ func isRequestOk(Addr string, Burst float64) bool {
 
 	item, newEntry := Cache.Get(ip)
 	if !newEntry {
-		fmt.Println("Entry not found in cache, adding")
-
 		item = bucket.New(1.0, Burst)
 		Cache.Add(ip, item)
 		return false
