@@ -1,40 +1,41 @@
-Ratelimit
-Limit the amount of HTTP-requests per X seconds using
-Redis.
+Simple HTTP rate limiter
+==========================
+Uses the leaky bucket algorithm to rate limit requests, can be used as middleware in a HTTP stack.
+
+Since we don't want to rate limit an infinite amount of IPs we have a LRU cache that throws away old
+connections.
+
+Settings
+========
+ratelimit.Delay           - Seconds to delay after DelayTreshold
+ratelimit.DelayThreshold  - Max hits after ratelimit exceeded before making service unavailable
+ratelimit.CacheSize       -  Max IPs we can ratelimit at a given time
+
+Example
+=======
 
 ```go
+package main
+
 import (
-"github.com/garyburd/redigo/redis"
-"github.com/xsnews/webutils/ratelimit"
-"github.com/xsnews/webutils/middleware"
-)
-var (
-Redis  *redis.Pool
+  "fmt"
+  "github.com/xsnews/webutils/middleware"
+  "github.com/xsnews/webutils/ratelimit"
+  "net/http"
 )
 
-func RedisPool(protocol string, server string) *redis.Pool {
-  return &redis.Pool{
-    MaxIdle:     3,
-    IdleTimeout: 240 * time.Second,
-    Dial: func() (redis.Conn, error) {
-      c, err := redis.Dial(protocol, server)
-      if err != nil {
-        return nil, err
-      }
-      return c, err
-    },
-    TestOnBorrow: func(c redis.Conn, t time.Time) error {
-      _, err := c.Do("PING")
-      return err
-    },
+func example(w http.ResponseWriter, r *http.Request) {
+  fmt.Fprintf(w, "OK")
+
+  return
+}
+
+func main() {
+  middleware.Add(ratelimit.Use(1.0, 4.0))
+  http.HandleFunc("/", example)
+
+  if err := http.ListenAndServe(":7070", nil); err != nil {
+    panic(err)
   }
 }
-
-func loadRedis() error {
-  Redis = RedisPool("tcp", ":6379")
-  return nil
-}
-
-ratelimit.SetRedis(Redis)
-http.Handle("/", middleware.Use(mux))
 ```
