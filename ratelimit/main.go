@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
+	"github.com/xsnews/microservice-core/log"
 )
 
 // HTTP StatusCode for Ratelimit
@@ -78,7 +78,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 		switch httpCode {
 		case StatusRateLimit:
 			// Ratelimit request
-			fmt.Println("CRIT: Ratelimit HTTP-request for IP=" + r.RemoteAddr + " (request dropped)")
+			log.Println("CRIT: Ratelimit HTTP-request for IP=%s (request dropped)", r.RemoteAddr)
 			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(StatusRateLimit)
 			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
@@ -87,7 +87,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 			return false
 		case http.StatusServiceUnavailable:
 			// Abusive client, responding less friendly
-			fmt.Println("CRIT: Ratelimit ignored by IP=" + r.RemoteAddr + " (request dropped)")
+			log.Println("CRIT: Ratelimit ignored by IP=%s (request dropped)", r.RemoteAddr)
 			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(http.StatusServiceUnavailable)
 			if e := httpd.FlushJson(w, httpd.Reply(false, http.StatusText(http.StatusServiceUnavailable))); e != nil {
