@@ -14,7 +14,6 @@ import (
 )
 
 var Cache *lru.Cache
-var Burst float64
 
 func init() {
 	/* LRU cache for a max of 1000 entries */
@@ -38,11 +37,11 @@ func isRequestOk(addr string, rate float64, burst float64, delay time.Duration) 
 	return ok
 }
 
-func Use(rate float64, burst float64, delay time.Duration) middleware.HandlerFunc {
+func Use(fillrate float64, capacity float64, delay time.Duration) middleware.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		ip := r.RemoteAddr
 
-		ok := isRequestOk(ip, rate, burst, delay)
+		ok := isRequestOk(ip, fillrate, capacity, delay)
 		if !ok {
 			w.WriteHeader(429)
 			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
