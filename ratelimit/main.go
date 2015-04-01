@@ -4,6 +4,7 @@ package ratelimit
  * HTTP Ratelimiter
  */
 import (
+	"fmt"
 	"github.com/golang/groupcache/lru"
 	"github.com/xsnews/webutils/httpd"
 	"github.com/xsnews/webutils/middleware"
@@ -19,23 +20,13 @@ const (
 	StatusRateLimitText = "Too Many Requests"
 )
 
-type RatelimitConfig struct {
-	Delay          time.Duration /* Delay after ratelimit exceeded */
-	DelayThreshold int           /* Max hits after ratelimit exceeded before making service unavailable */
-	CacheSize      int           /* Max connections we ratelimit based on LRU cache */
-}
+var (
+	Delay          time.Duration = time.Second * 3 /* Delay after ratelimit exceeded */
+	DelayThreshold int           = 10              /* Max hits after ratelimit exceeded before making service unavailable */
+	CacheSize      int           = 1000            /* Max connections we ratelimit based on LRU cache */
+)
 
-var Config *RatelimitConfig
 var Cache *lru.Cache
-
-func init() {
-	/* Set default (sane) ratelimit values */
-	Config = &RatelimitConfig{
-		DelayThreshold: 10,
-		CacheSize:      1000,
-		Delay:          time.Second * 3,
-	}
-}
 
 /* Returns http status code */
 func isRequestOk(addr string, rate float64, burst float64) int {
@@ -43,7 +34,7 @@ func isRequestOk(addr string, rate float64, burst float64) int {
 
 	request, isNewRequest := Cache.Get(ip)
 	if !isNewRequest {
-		request = bucket.New(rate, burst, Config.Delay)
+		request = bucket.New(rate, burst, Delay)
 		Cache.Add(ip, request)
 		return http.StatusOK
 	}
@@ -55,7 +46,7 @@ func isRequestOk(addr string, rate float64, burst float64) int {
 	ok, _ := c.Request(1.0)
 	if !ok {
 		/* Did we exceed our ratelimit threshold? */
-		if c.DelayCounter >= Config.DelayThreshold {
+		if c.DelayCounter >= DelayThreshold {
 			return http.StatusServiceUnavailable
 		}
 
@@ -69,7 +60,7 @@ func isRequestOk(addr string, rate float64, burst float64) int {
 
 func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 	/* Initialise LRU cache */
-	Cache = lru.New(Config.CacheSize)
+	Cache = lru.New(CacheSize)
 
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		httpCode := isRequestOk(r.RemoteAddr, fillrate, capacity)
