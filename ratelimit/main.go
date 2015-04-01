@@ -2,63 +2,52 @@ package ratelimit
 
 /**
  * HTTP Ratelimiter
- * Use Redis to limit amount of
- *  HTTP-conns so service isn't abused
  */
 import (
-	"github.com/garyburd/redigo/redis"
+	"fmt"
+	"github.com/golang/groupcache/lru"
 	"net/http"
-	"strconv"
 	"strings"
-	"github.com/xsnews/webutils/httpd"
-	"github.com/xsnews/webutils/middleware"
-	"github.com/xsnews/webutils/report"
+	"webutils/httpd"
+	"webutils/middleware"
+	"webutils/ratelimit/bucket"
 )
 
 type Limit struct {
-	RatelimitTime int    /* secs */
-	RatelimitMax  int    /* max reqs */
-	Proxy         bool   /* use proxy IP */
-	Prefix        string /* redis key prefix */
+	Burst  float64
+	Proxy  bool   /* use proxy IP */
+	Prefix string /* redis key prefix */
 }
 
-var (
-	_pool *redis.Pool
-)
+var Cache *lru.Cache
 
-func SetRedis(pool *redis.Pool) {
-	_pool = pool
+func init() {
+	/* LRU cache for a max of 1000 entries */
+	Cache = lru.New(1000)
 }
 
-func check(Ip string, Prefix string, Expire int, Max int) (bool, error) {
-	var (
-		e     error
-		count int
-	)
-	if strings.Index(Ip, ":") != -1 {
-		Ip = Ip[:strings.Index(Ip, ":")]
-	}
-	if _pool == nil {
-		panic("DevErr: Forgot to call SetRedis(pool)")
-	}
-	conn := _pool.Get()
-	defer conn.Close()
-	key := "RATELIMIT_" + Prefix + "_" + Ip
+// return true on ratelimit reached
+func isRateLimitReached(Addr string, Prefix string, Burst float64) bool {
+	ip := strings.Split(Addr, ":")[0]
+	key := Prefix + "_" + ip
 
-	count, e = redis.Int(conn.Do("INCR", key))
-	if e != nil {
-		return false, e
-	}
-	if count > Max {
-		report.Msg("Ratelimit reached for IP=" + Ip + " with prefix=" + Prefix)
-		return true, nil
+	item, ok := Cache.Get(key)
+	if !ok {
+		fmt.Println("Entry not found in cache, adding")
+
+		item = bucket.New(1.0, Burst)
+		Cache.Add(key, item)
+		return false
 	}
 
-	if _, e := conn.Do("EXPIRE", key, Expire); e != nil {
-		return false, e
+	/* Cast cache item */
+	c := item.(*bucket.Bucket)
+	requestOk, _ := c.Request(1.0)
+	if requestOk {
+		return false
+	} else {
+		return true
 	}
-	report.Debug("Increase ratelimit for IP=" + Ip + " to=" + strconv.FormatInt(int64(count), 10))
-	return false, nil
 }
 
 func Use(limit Limit) middleware.HandlerFunc {
@@ -67,13 +56,9 @@ func Use(limit Limit) middleware.HandlerFunc {
 		if limit.Proxy {
 			ip = r.Header.Get("X-Real-IP")
 		}
-		max, e := check(ip, limit.Prefix, limit.RatelimitTime, limit.RatelimitMax)
-		if e != nil {
-			// Report error and continue
-			// (accepting so Redis down doesn't mean service 100% down)
-			report.Err(e)
-		}
-		if max {
+
+		doLimit := isRateLimitReached(ip, limit.Prefix, limit.Burst)
+		if doLimit {
 			w.WriteHeader(429)
 			if e := httpd.FlushJson(w, httpd.Reply(false, "Ratelimit reached")); e != nil {
 				httpd.Error(w, e, "Flush failed")
