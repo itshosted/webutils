@@ -1,5 +1,6 @@
 package bucket
-
+// Limit the amount of requests per second.
+// Based off: http://en.wikipedia.org/wiki/Leaky_bucket
 import (
 	"math"
 	"time"
@@ -16,9 +17,9 @@ type Bucket struct {
 	DelayCounter int
 }
 
-/* Returns: requestOK, availableCapacity */
+// Increase request counter by amount.
+// Return false if limit is reached and show available in second arg
 func (b *Bucket) Request(amount float64) (bool, float64) {
-	/* Get current TS */
 	now := time.Now()
 
 	/* Are we delaying requests? */
@@ -28,13 +29,8 @@ func (b *Bucket) Request(amount float64) (bool, float64) {
 		return false, b.Available
 	}
 
-	/* Get elapsed time */
 	timeDiff := now.Sub(b.LastUpdate).Seconds()
-
-	/* Calculate bucket fill based on last request */
 	b.Available = math.Min(b.Capacity, b.Available+(timeDiff*b.Fillrate))
-
-	/* Update TS */
 	b.LastUpdate = now
 
 	if b.Available >= amount {
@@ -47,6 +43,15 @@ func (b *Bucket) Request(amount float64) (bool, float64) {
 	}
 }
 
+// Create new bucket.
+//
+// fillrate = Amount of requests per second
+// capacity = Extra requests allowed a-top fillrate
+// delay = Time delay request if ratelimited
+//
+// Example: fillrate=10 capacity=10
+//  this allows 10reqs/sec and if surpassed allow 10 reqs more
+//  before returning false with Request()
 func New(fillrate float64, capacity float64, delay time.Duration) *Bucket {
 	return &Bucket{
 		Fillrate:   fillrate,
