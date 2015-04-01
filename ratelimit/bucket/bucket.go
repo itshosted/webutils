@@ -1,7 +1,6 @@
 package bucket
 
 import (
-	"fmt"
 	"math"
 	"time"
 )
