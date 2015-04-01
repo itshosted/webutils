@@ -4,7 +4,6 @@ package ratelimit
  * HTTP Ratelimiter
  */
 import (
-	"fmt"
 	"github.com/golang/groupcache/lru"
 	"github.com/xsnews/webutils/httpd"
 	"github.com/xsnews/webutils/middleware"
