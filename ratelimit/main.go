@@ -4,7 +4,6 @@ package ratelimit
  * HTTP Ratelimiter
  */
 import (
-	"fmt"
 	"github.com/golang/groupcache/lru"
 	"github.com/xsnews/webutils/httpd"
 	"github.com/xsnews/webutils/middleware"
@@ -34,8 +33,7 @@ func isRequestOk(Addr string, rate float64, Burst float64) bool {
 
 	/* Cast cache item */
 	c := item.(*bucket.Bucket)
-	ok, r := c.Request(1.0)
-	fmt.Println(r)
+	ok, _ := c.Request(1.0)
 	return ok
 }
 
