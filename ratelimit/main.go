@@ -9,6 +9,7 @@ package ratelimit
  */
 import (
 	"github.com/golang/groupcache/lru"
+	"github.com/xsnews/microservice-core/log"
 	"github.com/xsnews/webutils/httpd"
 	"github.com/xsnews/webutils/middleware"
 	"github.com/xsnews/webutils/ratelimit/bucket"
@@ -16,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/xsnews/microservice-core/log"
 )
 
 // HTTP StatusCode for Ratelimit
