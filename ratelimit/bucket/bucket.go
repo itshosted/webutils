@@ -60,7 +60,7 @@ func New(fillrate float64, capacity float64, delay time.Duration) *Bucket {
 	return &Bucket{
 		Fillrate:   fillrate,
 		Capacity:   capacity,
-		Available:  math.Max(fillrate, capacity),
+		Available:  capacity,
 		LastUpdate: time.Now(),
 		Delay:      delay,
 	}

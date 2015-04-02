@@ -73,6 +73,16 @@ func check(addr string, rate float64, burst float64) int {
 func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 	cache = lru.New(CacheSize)
 
+	// Some sanity checks on fillrate and capacity
+	if fillrate > capacity {
+		panic("ratelimit: fillrate must be equal to or lower than capacity")
+	}
+
+	if fillrate < 1.0 {
+		panic("ratelimit: fillrate must be equal to or higher than 1")
+	}
+
+	// Everything is OK
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		httpCode := check(r.RemoteAddr, fillrate, capacity)
 		switch httpCode {
