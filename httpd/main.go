@@ -6,7 +6,6 @@ package httpd
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +28,9 @@ func FlushJson(w http.ResponseWriter, v interface{}) error {
 	if e != nil {
 		return e
 	}
-	fmt.Fprint(w, string(b))
+	if _, e := w.Write(b); e != nil {
+		return e
+	}
 	return nil
 }
 
