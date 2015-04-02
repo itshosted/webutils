@@ -78,7 +78,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 		switch httpCode {
 		case StatusRateLimit:
 			// Ratelimit request
-			log.Println("CRIT: Ratelimit HTTP-request for IP=%s (request dropped)", r.RemoteAddr)
+			log.Println("ratelimit: Dropped HTTP %s (IP=%s)", r.URL.String(), r.RemoteAddr)
 			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(StatusRateLimit)
 			if e := httpd.FlushJson(w, httpd.Reply(false, StatusRateLimitText)); e != nil {
@@ -87,7 +87,7 @@ func Use(fillrate float64, capacity float64) middleware.HandlerFunc {
 			return false
 		case http.StatusServiceUnavailable:
 			// Abusive client, responding less friendly
-			log.Println("CRIT: Ratelimit ignored by IP=%s (request dropped)", r.RemoteAddr)
+			log.Println("ratelimit: Banned abusive HTTP %s (IP=%s)", r.URL.String(), r.RemoteAddr)
 			w.Header().Set("Retry-After", strconv.Itoa(Delay))
 			w.WriteHeader(http.StatusServiceUnavailable)
 			if e := httpd.FlushJson(w, httpd.Reply(false, http.StatusText(http.StatusServiceUnavailable))); e != nil {
