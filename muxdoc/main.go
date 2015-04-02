@@ -37,9 +37,9 @@ func (m *MuxDoc) String() string {
 	buffer.WriteString("<div class=\"page-header\"><h1>" + m.Title + "</h1>")
 	buffer.WriteString("<p>" + m.Desc + "</p>")
 	buffer.WriteString(m.Meta)
-	buffer.WriteString("</div><table class=\"table table-striped\"><thead><tr><th>URL</th><th>Comment</th></tr></thead>")
+	buffer.WriteString("</div><h2>Routes</h2><table class=\"table table-striped\"><thead><tr><th>URL</th><th>Comment</th></tr></thead>")
 	for url, comment := range m.urls {
-		buffer.WriteString("<tr><td>" + url + "</td><td>" + comment + "</td></tr>")
+		buffer.WriteString("<tr><td><a href=\"" + url + "\">" + url + "</td><td>" + comment + "</td></tr>")
 	}
 	buffer.WriteString("</table></div></body></html>")
 
