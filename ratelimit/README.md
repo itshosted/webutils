@@ -7,9 +7,9 @@ connections.
 
 Settings
 ========
-ratelimit.Delay           - Seconds to delay after DelayTreshold
-ratelimit.DelayThreshold  - Max hits after ratelimit exceeded before making service unavailable
-ratelimit.CacheSize       -  Max IPs we can ratelimit at a given time
+* ratelimit.Delay           - Seconds to delay after DelayTreshold
+* ratelimit.DelayThreshold  - Max hits after ratelimit exceeded before making service unavailable
+* ratelimit.CacheSize       - Max IPs we can ratelimit at a given time
 
 Example
 =======
@@ -18,24 +18,31 @@ Example
 package main
 
 import (
-  "fmt"
-  "github.com/xsnews/webutils/middleware"
-  "github.com/xsnews/webutils/ratelimit"
-  "net/http"
+        "fmt"
+        "github.com/xsnews/webutils/middleware"
+        "github.com/xsnews/webutils/muxdoc"
+        "github.com/xsnews/webutils/ratelimit"
+        "net/http"
 )
 
 func example(w http.ResponseWriter, r *http.Request) {
-  fmt.Fprintf(w, "OK")
+        fmt.Fprintf(w, "OK from example")
 
-  return
+        return
 }
 
 func main() {
-  middleware.Add(ratelimit.Use(1.0, 4.0))
-  http.HandleFunc("/", example)
+        mux := &muxdoc.MuxDoc{
+                Title: "Ratelimit example",
+                Desc:  "Description",
+        }
+        mux.Add("/", example, "Ratelimit example")
 
-  if err := http.ListenAndServe(":7070", nil); err != nil {
-    panic(err)
-  }
+        middleware.Add(ratelimit.Use(1.0, 3.0))
+        http.Handle("/", middleware.Use(mux.Mux))
+
+        if err := http.ListenAndServe(":7070", nil); err != nil {
+                panic(err)
+        }
 }
 ```
