@@ -12,11 +12,14 @@ package session
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
+	"strings"
 	"github.com/xsnews/webutils/encrypt"
-	"github.com/xsnews/webutils/report"
+	"github.com/xsnews/mcore/log"
+	"github.com/xsnews/webutils/str"
 )
+
+const COOKIE = "sess"
 
 /**
  * Cookie data structure.
@@ -26,59 +29,104 @@ import (
  * another person.
  */
 type Session struct {
-	Id       int64
-	Ldap     string
-	Random   string
-	Reseller string
-	Ip       string
-	Ua       string /* User-agent */
+	Random   string      /* Jitter so cookie always changes */
+	Ip       string      /* Visitor IP */
+	Ua       string      /* Visitor User-agent */
+	More     interface{} /* More data */
+
+	expires   time.Time   /* Expiration time */
+	iv        string
+	httpsOnly bool
 }
 
-func (s *Session) Encrypt(iv string) (string, error) {
-	return encrypt.EncryptBase64("aes", iv, s)
-}
-
-func (s *Session) Decrypt(in string, iv string) error {
-	return encrypt.DecryptBase64("aes", iv, in, s)
-}
-
-func Expire(w http.ResponseWriter, cookie *http.Cookie) {
+// Expire cookie
+func Expire(w http.ResponseWriter) {
+	cookie := new(http.Cookie)
+	cookie.Name = COOKIE
 	cookie.Value = ""
 	cookie.Expires = time.Date(1970, 1, 1, 1, 0, 0, 0, time.UTC)
 	cookie.Path = "/"
 	http.SetCookie(w, cookie)
 }
 
-func Read(w http.ResponseWriter, r *http.Request, proxy bool, IV string) (*Session, error) {
-	sess := new(Session)
-	c, e := r.Cookie("sess")
-	if e != nil {
-		return nil, e
+// Get visitor IP
+// Force through X-Real-IP as Go microservices
+// should be called through reverse proxy
+func ip(r *http.Request) string {
+	ip := r.Header.Get("X-Real-IP")
+	if ip == "" {
+		log.Println(
+			"WARN: Reverse-proxy does not supply X-Real-IP field! (https://github.com/xsnews/webutils/tree/master/session)",
+		)
+		// Fallback
+		ip = r.RemoteAddr
 	}
-	e = sess.Decrypt(c.Value, IV)
+
+	return ip
+}
+
+// Read request and return session
+// Take writer to expire cookie on theft
+func Get(w http.ResponseWriter, r *http.Request, iv string, more interface{}) error {
+	sess := new(Session)
+	sess.More = more
+
+	c, e := r.Cookie(COOKIE)
 	if e != nil {
-		return nil, e
+		if e == http.ErrNoCookie {
+			return nil
+		}
+		return e
+	}
+	if e := encrypt.DecryptBase64("aes", iv, c.Value, sess); e != nil {
+		return e
 	}
 
 	// Session theft protection
-	if proxy {
-		if sess.Ip != r.Header.Get("X-Real-IP") {
-			report.Msg("[IP CHANGED] Possible stolen cookie for loginId=" + strconv.FormatInt(sess.Id, 10))
-			Expire(w, c)
-			return nil, errors.New("IP changed")
-		}
-	} else {
-		if sess.Ip != r.RemoteAddr {
-			report.Msg("[IP CHANGED] Possible stolen cookie for loginId=" + strconv.FormatInt(sess.Id, 10))
-			Expire(w, c)
-			return nil, errors.New("IP changed")
-		}
+	ip := ip(r)
+	if sess.Ip != ip {
+		log.Println("WARN: IP changed, cookie expired for IP=%s/%s", sess.Ip, ip)
+		Expire(w)
+		return errors.New("IP changed")
+	}
+	if sess.Ua != r.Header.Get("User-Agent") {
+		log.Println(
+			"WARN: User-Agent changed, cookie expired for IP=%s/%s (UA=%s/%s)",
+			sess.Ip, ip, sess.Ua, r.Header.Get("User-Agent"),
+		)
+		Expire(w)
+		return errors.New("UserAgent changed")
 	}
 
-	if sess.Ua != r.Header.Get("User-Agent") {
-		report.Msg("[UA CHANGED] Possible stolen cookie for loginId=" + strconv.FormatInt(sess.Id, 10))
-		Expire(w, c)
-		return nil, errors.New("UserAgent changed")
+	return nil
+}
+
+// Security notice:
+// - By default HttpOnly is set, so JS can't see the cookie
+// - If httpsOnly is set the browser only reads the cookie through https
+func New(w http.ResponseWriter, r *http.Request, expires time.Time, iv string, httpsOnly bool, more interface{}) error {
+	s := Session{
+		Random: str.RandText(10),
+		Ip: ip(r),
+		Ua: r.Header.Get("User-Agent"),
+		More: more,
 	}
-	return sess, nil
+
+	c, e := encrypt.EncryptBase64("aes", iv, s)
+	if e != nil {
+		return e
+	}
+
+	cookie := new(http.Cookie)
+	cookie.Name = COOKIE
+	cookie.Value = c
+	cookie.Path = "/"
+	cookie.Domain = strings.Split(r.Header.Get("Host"), ":")[0]
+	cookie.Expires = s.expires
+	if httpsOnly {
+		cookie.Secure = true
+	}
+	cookie.HttpOnly = true
+	http.SetCookie(w, cookie)
+	return nil
 }

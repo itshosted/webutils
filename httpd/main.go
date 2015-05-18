@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"github.com/xsnews/webutils/report"
+	"github.com/xsnews/mcore/log"
 )
 
 type DefaultResponse struct {
@@ -24,6 +24,7 @@ func Reply(status bool, text string) DefaultResponse {
 
 // Write v as string to w
 func FlushJson(w http.ResponseWriter, v interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
 	b, e := json.Marshal(v)
 	if e != nil {
 		return e
@@ -67,7 +68,7 @@ func ReadOutput(r *http.Response, out interface{}) error {
 // Write msg as error and report e to log
 func Error(w http.ResponseWriter, e error, msg string) {
 	if e != nil {
-		report.Err(e)
+		log.Println("%v", e)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
@@ -78,7 +79,7 @@ func Error(w http.ResponseWriter, e error, msg string) {
 
 // Proxy stream through
 func Pipe(url string, w http.ResponseWriter) error {
-	report.Debug("Pipe: " + url)
+	log.Debug("Pipe: " + url)
 	res, e := http.Get(url)
 	if e != nil {
 		return e

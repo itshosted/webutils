@@ -6,7 +6,7 @@ package httpreq
 import (
 	"github.com/xsnews/webutils/middleware"
 	"net/http"
-	"github.com/xsnews/microservice-core/log"
+	"github.com/xsnews/mcore/log"
 )
 
 // Write HTTP request to log.

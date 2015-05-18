@@ -63,3 +63,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
     cookie.HttpOnly = true
     http.SetCookie(w, cookie)
 ```
+
+WARN: Nginx does not supply X-Real-IP field!
+================
+This warning is printed when NGINx does not forward the client IP
+to the Go-backend.
+
+```
+location ~^/newsd/(.*)$ {
+  proxy_pass http://newsd/$1$is_args$args;
+  proxy_set_header Host $http_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header User-Agent $http_user_agent;
+}
+```

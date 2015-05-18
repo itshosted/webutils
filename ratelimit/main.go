@@ -9,7 +9,7 @@ package ratelimit
  */
 import (
 	"github.com/golang/groupcache/lru"
-	"github.com/xsnews/microservice-core/log"
+	"github.com/xsnews/mcore/log"
 	"github.com/xsnews/webutils/httpd"
 	"github.com/xsnews/webutils/middleware"
 	"github.com/xsnews/webutils/ratelimit/bucket"
