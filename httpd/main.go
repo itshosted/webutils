@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"github.com/xsnews/mcore/log"
+	"github.com/itshosted/mcore/log"
 )
 
 type DefaultResponse struct {

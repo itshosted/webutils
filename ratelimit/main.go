@@ -9,10 +9,10 @@ package ratelimit
  */
 import (
 	"github.com/golang/groupcache/lru"
-	"github.com/xsnews/mcore/log"
-	"github.com/xsnews/webutils/httpd"
-	"github.com/xsnews/webutils/middleware"
-	"github.com/xsnews/webutils/ratelimit/bucket"
+	"github.com/itshosted/mcore/log"
+	"github.com/itshosted/webutils/httpd"
+	"github.com/itshosted/webutils/middleware"
+	"github.com/itshosted/webutils/ratelimit/bucket"
 	"net/http"
 	"strconv"
 	"strings"

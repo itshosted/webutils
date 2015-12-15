@@ -14,9 +14,9 @@ import (
 	"net/http"
 	"time"
 	"strings"
-	"github.com/xsnews/webutils/encrypt"
-	"github.com/xsnews/mcore/log"
-	"github.com/xsnews/webutils/str"
+	"github.com/itshosted/webutils/encrypt"
+	"github.com/itshosted/mcore/log"
+	"github.com/itshosted/webutils/str"
 )
 
 const COOKIE = "sess"

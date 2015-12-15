@@ -4,9 +4,9 @@ package httpreq
  * Log HTTP-requests.
  */
 import (
-	"github.com/xsnews/webutils/middleware"
+	"github.com/itshosted/webutils/middleware"
 	"net/http"
-	"github.com/xsnews/mcore/log"
+	"github.com/itshosted/mcore/log"
 )
 
 // Write HTTP request to log.
