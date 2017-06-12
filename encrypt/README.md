@@ -17,3 +17,7 @@ import (
 
 str, err := encrypt.EncryptBase64("aes", "32charstring____________________", instance)
 ```
+
+Used code from
+https://speakerdeck.com/gtank/crypto-for-go-developers
+https://github.com/gtank/cryptopasta
