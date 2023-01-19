@@ -15,6 +15,7 @@ const (
 var src = rand.NewSource(time.Now().UnixNano())
 
 // Random string chars, n=length
+// TODO: src.Func is NOT concurrent safe, so please don't use this function!!
 // http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
 func RandText(n int) string {
     b := make([]byte, n)
