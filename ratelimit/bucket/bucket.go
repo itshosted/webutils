@@ -54,8 +54,9 @@ func (b *Bucket) Request(amount float64) bool {
 // delay = Time delay request if ratelimited
 //
 // Example: fillrate=10 capacity=10
-//  this allows 10reqs/sec and if surpassed allow 10 reqs more
-//  before returning false with Request()
+//
+//	this allows 10reqs/sec and if surpassed allow 10 reqs more
+//	before returning false with Request()
 func New(fillrate float64, capacity float64, delay time.Duration) *Bucket {
 	return &Bucket{
 		Fillrate:   fillrate,

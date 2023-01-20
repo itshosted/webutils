@@ -11,12 +11,12 @@ package session
  */
 import (
 	"errors"
-	"net/http"
-	"time"
-	"strings"
-	"github.com/itshosted/webutils/encrypt"
 	"github.com/itshosted/mcore/log"
+	"github.com/itshosted/webutils/encrypt"
 	"github.com/itshosted/webutils/str"
+	"net/http"
+	"strings"
+	"time"
 )
 
 const COOKIE = "sess"
@@ -29,12 +29,12 @@ const COOKIE = "sess"
  * another person.
  */
 type Session struct {
-	Random   string      /* Jitter so cookie always changes */
-	Ip       string      /* Visitor IP */
-	Ua       string      /* Visitor User-agent */
-	More     interface{} /* More data */
+	Random string      /* Jitter so cookie always changes */
+	Ip     string      /* Visitor IP */
+	Ua     string      /* Visitor User-agent */
+	More   interface{} /* More data */
 
-	expires   time.Time   /* Expiration time */
+	expires   time.Time /* Expiration time */
 	iv        string
 	httpsOnly bool
 }
@@ -107,9 +107,9 @@ func Get(w http.ResponseWriter, r *http.Request, iv string, more interface{}) er
 func New(w http.ResponseWriter, r *http.Request, expires time.Time, iv string, httpsOnly bool, more interface{}) error {
 	s := Session{
 		Random: str.RandText(10),
-		Ip: ip(r),
-		Ua: r.Header.Get("User-Agent"),
-		More: more,
+		Ip:     ip(r),
+		Ua:     r.Header.Get("User-Agent"),
+		More:   more,
 	}
 
 	c, e := encrypt.EncryptBase64("aes", iv, s)
