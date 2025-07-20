@@ -11,12 +11,13 @@ package session
  */
 import (
 	"errors"
-	"github.com/itshosted/mcore/log"
-	"github.com/itshosted/webutils/encrypt"
-	"github.com/itshosted/webutils/str"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/itshosted/mcore/log"
+	"github.com/itshosted/webutils/encrypt"
+	"github.com/itshosted/webutils/str"
 )
 
 const COOKIE = "sess"
@@ -34,9 +35,9 @@ type Session struct {
 	Ua     string      /* Visitor User-agent */
 	More   interface{} /* More data */
 
-	expires   time.Time /* Expiration time */
-	iv        string
-	httpsOnly bool
+	expires time.Time /* Expiration time */
+	// iv        string
+	// httpsOnly bool
 }
 
 // Expire cookie

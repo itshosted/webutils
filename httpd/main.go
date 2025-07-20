@@ -6,11 +6,12 @@ package httpd
 import (
 	"encoding/json"
 	"errors"
-	"github.com/itshosted/mcore/log"
 	"io"
-	"io/ioutil"
+
 	"net/http"
 	"strconv"
+
+	"github.com/itshosted/mcore/log"
 )
 
 type DefaultResponse struct {
@@ -39,7 +40,7 @@ func FlushJson(w http.ResponseWriter, v interface{}) error {
 func ReadInput(r *http.Request, out interface{}) error {
 	defer r.Body.Close()
 
-	body, e := ioutil.ReadAll(r.Body)
+	body, e := io.ReadAll(r.Body)
 	if e != nil {
 		return e
 	}
@@ -54,7 +55,7 @@ func ReadInput(r *http.Request, out interface{}) error {
 func ReadOutput(r *http.Response, out interface{}) error {
 	defer r.Body.Close()
 
-	body, e := ioutil.ReadAll(r.Body)
+	body, e := io.ReadAll(r.Body)
 	if e != nil {
 		return e
 	}
@@ -79,7 +80,7 @@ func Error(w http.ResponseWriter, e error, msg string) {
 
 // Proxy stream through
 func Pipe(url string, w http.ResponseWriter) error {
-	log.Debug("Pipe: " + url)
+	log.Debug("Pipe: %s", url)
 	res, e := http.Get(url)
 	if e != nil {
 		return e

@@ -8,15 +8,16 @@ package ratelimit
  * - Block requests if limit is ignored DelayTreshHold times (HTTP 503)
  */
 import (
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/golang/groupcache/lru"
 	"github.com/itshosted/mcore/log"
 	"github.com/itshosted/webutils/httpd"
 	"github.com/itshosted/webutils/middleware"
 	"github.com/itshosted/webutils/ratelimit/bucket"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // HTTP StatusCode for Ratelimit
