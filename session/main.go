@@ -30,12 +30,11 @@ const COOKIE = "sess"
  * another person.
  */
 type Session struct {
-	Random string      /* Jitter so cookie always changes */
-	Ip     string      /* Visitor IP */
-	Ua     string      /* Visitor User-agent */
-	More   interface{} /* More data */
-
-	expires time.Time /* Expiration time */
+	Random  string      /* Jitter so cookie always changes */
+	Ip      string      /* Visitor IP */
+	Ua      string      /* Visitor User-agent */
+	More    interface{} /* More data */
+	expires time.Time   /* Expiration time */
 }
 
 /*
