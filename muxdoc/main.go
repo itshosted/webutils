@@ -7,6 +7,8 @@ package muxdoc
 import (
 	"bytes"
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
 
 type MuxDoc struct {
@@ -44,4 +46,38 @@ func (m *MuxDoc) String() string {
 	buffer.WriteString("</table></div></body></html>")
 
 	return buffer.String()
+}
+
+// ToYAML returns the same data as your original String() but in YAML form.
+func (m *MuxDoc) ToYAML() (string, error) {
+	// helper types for marshalling
+	type urlItem struct {
+		URL     string `yaml:"url"`
+		Comment string `yaml:"comment"`
+	}
+	out := struct {
+		Title       string    `yaml:"title"`
+		Description string    `yaml:"description"`
+		Meta        string    `yaml:"meta"`
+		URL         []urlItem `yaml:"url"`
+	}{
+		Title:       m.Title,
+		Description: m.Desc,
+		Meta:        m.Meta,
+		URL:         make([]urlItem, 0, len(m.urls)),
+	}
+
+	// collect URL/comment pairs
+	for u, c := range m.urls {
+		out.URL = append(out.URL, urlItem{URL: u, Comment: c})
+	}
+
+	// marshal to YAML
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+
+	if err := enc.Encode(out); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
