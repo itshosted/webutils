@@ -36,9 +36,15 @@ type Session struct {
 	More   interface{} /* More data */
 
 	expires time.Time /* Expiration time */
-	// iv        string
-	// httpsOnly bool
 }
+
+/*
+ * The following fields were considered for inclusion in the Session struct:
+ * - iv (string): Initialization vector for encryption.
+ * - httpsOnly (bool): Flag to enforce HTTPS-only cookies.
+ * These fields are currently excluded but may be added in the future if
+ * encryption or stricter cookie policies are implemented.
+ */
 
 // Expire cookie
 func Expire(w http.ResponseWriter) {

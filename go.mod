@@ -1,6 +1,6 @@
 module github.com/itshosted/webutils
 
-go 1.24.3
+go 1.24
 
 require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8
